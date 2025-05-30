@@ -3,22 +3,39 @@ import axios from "axios";
 import type { PessoasType, FilmsType } from "../../@types/dataTypes";
 
 export function Home() {
-  const [page, setPage] = useState<number>();
+  const [page, setPage] = useState<number>(1);
   const [pessoas, setPessoas] = useState<PessoasType[]>([]);
   const [filmes, setFilmes] = useState<FilmsType[]>([]);
   const [filterPessoas, setFilterPessoas] = useState<string[]>([]);
+  const [actualPage, setActualPage] = useState<string | number>(1);
+  const [pageUrl, setPageUrl] = useState("https://swapi.py4e.com/api/people");
+  const [nextPage, setNextPage] = useState<string | null>(null);
+  const [prevPage, setPrevPage] = useState<string | null>(null);
   const [filterFilms, setFilterFilms] = useState<string[] | undefined>();
 
+  //pessoas
+  useEffect(() => {
+    async function fetchPessoas() {
+      try {
+        const res = await axios.get(pageUrl)
+        console.log(res)
+        setPessoas(res.data.results);
+        setNextPage(res.data.next);
+        setPrevPage(res.data.previous);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    fetchPessoas();
+  }, [pageUrl])
+
+
+  //filmes
   useEffect(() => {
     async function fetch() {
       try {
-        const pessoasPromise = await axios.get('https://swapi.py4e.com/api/people');
         const filmesPromise = await axios.get('https://swapi.py4e.com/api/films');
-        setPessoas(pessoasPromise?.data.results);
         setFilmes(filmesPromise?.data.results);
-
-        // console.log('Pessoas:', pessoasPromise.data);
-        // console.log('Filmes:', filmesRes.data.results);
       } catch (e) {
         console.error(e);
       }
@@ -37,9 +54,19 @@ export function Home() {
     return setFilterFilms(titles)
   }
 
-  function avancarPagina() { }
+  function avancarPagina() {
+    if (nextPage) {
+      setActualPage(prev => Number(prev) + 1)
+      setPageUrl(nextPage)
+    }
+  }
 
-  function voltarPagina() { }
+
+  function voltarPagina() {
+    if (prevPage) {
+      setPageUrl(prevPage)
+    }
+  }
 
 
   return (
@@ -114,11 +141,11 @@ export function Home() {
           <span style={{
             color: "#fff",
             fontFamily: "sans-serif"
-          }}>Página {page}</span>
+          }}>Página {Number(actualPage)}</span>
 
           <button
             type="button"
-            onClick={avancarPagina}
+            onClick={() => avancarPagina()}
             style={{
               padding: "8px", fontFamily: "sans-serif", fontWeight: "500", cursor: "pointer",
               border: "none", borderRadius: "3px", background: "#21042c", color: "#fff"
